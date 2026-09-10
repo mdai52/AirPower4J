@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.MethodParameter;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.server.ServerHttpRequest;
@@ -135,6 +136,19 @@ public class CurdResponseInterceptor implements ResponseBodyAdvice<Object> {
                 // 禁用日志
                 return;
             }
+        }
+        HttpHeaders headers = request.getHeaders();
+        try {
+            String authorization = headers.getFirst(HttpHeaders.AUTHORIZATION);
+            String referer = headers.getFirst(HttpHeaders.REFERER);
+            String userAgent = headers.getFirst(HttpHeaders.USER_AGENT);
+            log.info("请求头部 {}", Json.toString(Map.of(
+                    "authorization", Objects.requireNonNullElse(authorization, ""),
+                    "referer", Objects.requireNonNullElse(referer, ""),
+                    "userAgent", Objects.requireNonNullElse(userAgent, "")
+            )));
+        } catch (Exception e) {
+            log.error("获取请求头失败, {}", e.getMessage(), e);
         }
         log.info("请求包体 {}", getRequestBody(((ServletServerHttpRequest) request).getServletRequest()));
     }
